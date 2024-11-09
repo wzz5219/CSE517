@@ -1,1 +1,6 @@
-EventStacK
+Project Run:
+
+Please run main.py to run the simulations.
+eventstack.py -> EventStack Class
+tandemqueuesimulator.py -> TandemQueueSimulator Class that uses EventStack
+
