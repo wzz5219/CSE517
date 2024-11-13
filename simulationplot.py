@@ -3,29 +3,36 @@ import matplotlib.pyplot as plt
 from collections import deque
 from scipy.stats import t
 import os,sys
+from scipy import stats
 
-def plot(values, num_simulations, metric_name):
-	mean = np.mean(values)
-	std_dev = np.std(values, ddof=1)
-	confidence_level = 0.95
-	z_score = 1.96  # for 95% confidence interval
-	margin_of_error = z_score * (std_dev / np.sqrt(num_simulations))  # Margin of error
-	ci_lower = mean - margin_of_error
-	ci_upper = mean + margin_of_error
+def compute_ci(sample, confidence=0.95):
+    n = len(sample)
+    mean = np.mean(sample)
+    std_dev = np.std(sample, ddof=1)  # Sample standard deviation
+    t_value = stats.t.ppf((1 + confidence) / 2, df=n - 1)  # t-value for 95% CI
+    
+    # Calculate the margin of error
+    margin_of_error = t_value * (std_dev / np.sqrt(n))
+    
+    return mean, margin_of_error
 
-	# Plotting the results with confidence interval
+def plot(configurations, poisson_means, poisson_errors, uniform_means, uniform_errors, jackson_values, ylabel):
+	# Plotting
 	plt.figure(figsize=(10, 6))
-	plt.hist(values, bins=10, alpha=0.7, color='lightblue', edgecolor='black')
-	plt.axvline(mean, color='red', linestyle='--', label=f"Mean = {mean:.2f}")
-	plt.axvline(ci_lower, color='green', linestyle='--', label=f"95% CI Lower = {ci_lower:.2f}")
-	plt.axvline(ci_upper, color='green', linestyle='--', label=f"95% CI Upper = {ci_upper:.2f}")
-	plt.xlabel(metric_name)
-	plt.ylabel('Frequency')
-	plt.title(f'{metric_name} with 95% Confidence Interval')
-	plt.legend()
-	#plt.show()
-	plt.savefig(f"plot_{metric_name}.png")
 
-	# Print the statistics
-	print(f"{metric_name}: {mean:.2f}")
-	print(f"95% Confidence Interval: ({ci_lower:.2f}, {ci_upper:.2f})")
+	plt.errorbar(configurations, poisson_means, yerr=poisson_errors, fmt='o', label='poisson(arrival=2)_simulation(95%CI)', color='blue', capsize=5)
+
+	plt.errorbar(configurations, uniform_means, yerr=uniform_errors, fmt='^', label='uniform(arrival)_simulation(95%CI)', color='green', capsize=5)
+
+	# Plot jackson formula values as a point for each configuration
+	plt.scatter(configurations, jackson_values, color='red', marker='s', label='Jackson formulaValue', zorder=5)
+
+	# Customizing the plot
+	plt.xlabel('simulation-params')
+	plt.ylabel(ylabel)
+	plt.xticks(rotation=45)  # Rotate labels for better visibility
+	plt.legend()
+	plt.grid(True)
+	plt.tight_layout()
+
+	plt.savefig(f"plot_{ylabel}.png")
